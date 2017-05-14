@@ -1,122 +1,39 @@
-// site: http://www.lucadentella.it/en/2015/10/13/automazione-con-bot-telegram/
+var express = require('express');
 
-// Git: https://github.com/lucadentella/HomeAutomationBOT/blob/master/bot.js
+var morgan = require('morgan');
+
+var path = require('path');
 
 
-// Authorized users, replace with your real IDs
+var app = express();
 
-var authorized_users = [
-  111111111,
-];
+app.use(morgan('combined'));
 
-// Include required libraries
-var sensorLib = require('node-dht-sensor');
-var Bot = require('node-telegram-bot');
 
-// Initialize relay board (using onoff library)
-var Gpio = require('onoff').Gpio,
-  relay1 = new Gpio(2, 'out'),
-  relay2 = new Gpio(3, 'out');
+app.get('/', function (req, res) 
+{
 
-// Turn both the relays off
-relay1.writeSync(0);
-relay2.writeSync(0);
+  res.sendFile(path.join(__dirname, 'ui', 'index.html'));
 
-// Initialize DHT11 sensor
-sensorLib.initialize(11, 4);
-
-// Initialize and start Telegram BOT (insert your real token)
-var bot = new Bot({
-  token: '375987811:AAHQreVDiaUCR8HRxiYzLfwIqYeMAWUnMXc'
 });
 
-// Attach event on every received message 
-bot.on('message', function (message) {
-  parseMessage(message);
-});
 
-// Start the bot
-bot.start();
-console.log("BOT ready!");
-
-// Function that handles a new message
-function parseMessage(message) {
-
-  if(!isAuthorized(message.from.id)) return;
-
-  switch(true) {
-  
-    case message.text == "/gettemp":
-      bot.sendMessage({
-        chat_id: message.chat.id,
-        text: 'Actual temperature: ' + sensorLib.read().temperature.toFixed(0) + '°C',
-      });
-      break;
-
-    case message.text == "/gethum":
-      bot.sendMessage({
-        chat_id: message.chat.id,
-        text: 'Actual humidity: ' + sensorLib.read().humidity.toFixed(0) + '%',
-      });
-      break;
-
-    case message.text == "/getouts":
-      bot.sendMessage({
-        chat_id: message.chat.id,
-        text: 'Actual outputs status:\nOutput 1 is ' + relay1.readSync() + '\nOutput 2 is ' + relay2.readSync(),
-      });
-      break;
-
-    case /^\/setout1/.test(message.text):
-      var command = message.text.replace("/setout1 ", "");
-      if(command.toLowerCase() == "on") {
-        relay1.writeSync(1);
-        bot.sendMessage({
-          chat_id: message.chat.id,
-          text: 'Output 1 turned ON',
-        });
-      } else if(command.toLowerCase() == "off") {
-        relay1.writeSync(0);
-        bot.sendMessage({
-          chat_id: message.chat.id,
-          text: 'Output 1 turned OFF',
-        });
-      } else
-        bot.sendMessage({
-          chat_id: message.chat.id,
-          text: 'Unknown command: ' + command,
-        });    
-    break;
-
-    case /^\/setout2/.test(message.text):
-      var command = message.text.replace("/setout2 ", "");
-      if(command.toLowerCase() == "on") {
-        relay2.writeSync(1);
-        bot.sendMessage({
-          chat_id: message.chat.id,
-          text: 'Output 2 turned ON',
-        });
-      } else if(command.toLowerCase() == "off") {
-        relay2.writeSync(0);
-        bot.sendMessage({
-          chat_id: message.chat.id,
-          text: 'Output 2 turned OFF',
-        });
-      } else
-        bot.sendMessage({
-          chat_id: message.chat.id,
-          text: 'Unknown command: ' + command,
-        });
-    break;
-  }
-}
-
-
-// Function that checks if the user is authorized (its id is in the array)
-function isAuthorized(userid) {
-
-  for(i = 0; i < authorized_users.length; i++) 
-    if(authorized_users[i ] == userid) return true;
+app.get('/ui/style.css', function (req, res) 
+{
  
-  return false;
+ res.sendFile(path.join(__dirname, 'ui', 'style.css'));
+
 }
+);
+
+
+app.get('/ui/madi.png', function (req, res) {
+  res.sendFile(path.join(__dirname, 'ui', 'madi.png'));
+});
+
+
+var port = 8080; // Use 8080 for local development because you might already have apache running on 80
+app.listen(8080, function () {
+  console.log(`IMAD course app listening on port ${port}!`);
+});
+
